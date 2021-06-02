@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'actionModel.dart';
+import 'package:chatdemo/actionModel.dart';
 
 class ChatActions extends StatelessWidget {
 
@@ -11,9 +11,6 @@ class ChatActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    print("actions :\n");
-    print(actions);
 
       return Container(
         padding: EdgeInsets.only(left: 14, right: 14, top: 8, bottom: 8),

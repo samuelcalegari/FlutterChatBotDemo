@@ -150,7 +150,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _scrollBottom() {
-    print('scroll');
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -242,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   var suggestedActions = obj['activities'][0]['suggestedActions'] ?? null;
 
                   //print('\n#########################\n');
-                  //print(obj);
+                  print(obj['watermark']);
 
                   if(from != 'user') {
                     w = int.tryParse(obj['watermark']);
@@ -257,8 +256,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     if(suggestedActions!=null) {
 
                       List<dynamic> v = suggestedActions['actions'].map((e) => Act(type: e['type'], title: e['title'], value: e['value'])).toList();
-                      //print(v.runtimeType);
-                      //print(v);
 
                       messages.add(ChatActions(actions: v,
                           from: from,
@@ -269,12 +266,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       widget.watermark = w;
                   }
 
-                  WidgetsBinding.instance!
-                      .addPostFrameCallback((_){
-                    print("Post Frame");
-                    _scrollBottom();
-                  });
-
+                  // AutoScroll when data incoming
+                  WidgetsBinding.instance!.addPostFrameCallback((_){ _scrollBottom();});
 
                 } catch(e) {}
 
@@ -283,7 +276,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   itemCount: messages.length,
                   shrinkWrap: false,
                   physics: ScrollPhysics(),
-                  padding: EdgeInsets.only(top: 10,bottom: 10),
+                  padding: EdgeInsets.only(top: 10,bottom: 100),
                   itemBuilder: (context, index){
                     return messages[index];
                   },
