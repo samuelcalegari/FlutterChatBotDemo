@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:chatdemo/actionModel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:chatdemo/chatMessageModel.dart';
+import 'package:chatdemo/chatActionsModel.dart';
 
 
 String _secret = 'ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ';
@@ -44,13 +46,22 @@ _getStreamUrl() async {
 
 _sendMessage(msg) async {
 
+  final fmsg = jsonEncode({
+    "locale": "fr-FR",
+    "type": "message",
+    "from": {
+      "id": "user"
+    },
+    "text": msg
+  });
+
   final response = await http.post(
     Uri.parse('https://directline.botframework.com/v3/directline/conversations/' + _conversationId + '/activities'),
     headers: {
       HttpHeaders.authorizationHeader: "Bearer " + _token ,
       HttpHeaders.contentTypeHeader: "application/json"
     },
-    body: msg,
+    body: fmsg,
   );
 
   final responseJson = jsonDecode(response.body);
@@ -60,7 +71,6 @@ _sendMessage(msg) async {
 
 void main() {
   _getStreamUrl().whenComplete((){
-    print("ok");
     runApp(MyApp());
   });
 }
@@ -96,54 +106,32 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _msgText = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  List<ChatMessage> messages = [];
+  List messages = [];
 
   _startConversation() {
 
     try {
 
-      final msg = jsonEncode({
-        "locale": "fr-FR",
-        "type": "message",
-        "from": {
-          "id": "user"
-        },
-        "text": "Bonjour"
-      });
-
-      _sendMessage(msg);
-
-
+      _sendMessage("Bonjour");
     } catch (e) {
+
       print ('erreur envoi message');
       print(e.toString());
     }
-
   }
-
 
   _send() {
 
     setState(() {
-
       if (_msgText.text.isNotEmpty) {
 
         // Add Message
         try {
 
-          final msg = jsonEncode({
-            "locale": "fr-FR",
-            "type": "message",
-            "from": {
-              "id": "user"
-            },
-            "text": _msgText.text
-          });
-
-          _sendMessage(msg);
+          _sendMessage(_msgText.text);
           print ('message envoyé');
-
         } catch (e) {
+
           print ('erreur envoi message');
           print(e.toString());
         }
@@ -155,21 +143,22 @@ class _MyHomePageState extends State<MyHomePage> {
           currentFocus.unfocus();
         }
 
-        // Scroll to Bottom
-        /*
-        _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 500),
-            curve: Curves.fastOutSlowIn
-        );*/
-
-
         // Clear Text Input
         _msgText.text = '';
       }
     });
   }
 
+  _scrollBottom() {
+    print('scroll');
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 500),
+          curve: Curves.fastOutSlowIn
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -190,6 +179,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -243,25 +233,48 @@ class _MyHomePageState extends State<MyHomePage> {
 
               } else if (snapshot.hasData) {
 
-                try {
-                  print('\n#########################\n');
-                  var obj = jsonDecode(snapshot.data);
-                  var from = obj['activities'][0]['from']['id'];
-                  int? w;
 
-                  if(from!='user') {
+                try {
+
+                  int? w;
+                  dynamic obj = jsonDecode(snapshot.data);
+                  String from = obj['activities'][0]['from']['id'];
+                  var suggestedActions = obj['activities'][0]['suggestedActions'] ?? null;
+
+                  //print('\n#########################\n');
+                  //print(obj);
+
+                  if(from != 'user') {
                     w = int.tryParse(obj['watermark']);
                   }
 
-                  print(obj);
-
                   if((from =="user") || (w != widget.watermark)) {
+
                     messages.add(ChatMessage(
                         content: obj['activities'][0]['text'],
                         from: from));
+
+                    if(suggestedActions!=null) {
+
+                      List<dynamic> v = suggestedActions['actions'].map((e) => Act(type: e['type'], title: e['title'], value: e['value'])).toList();
+                      //print(v.runtimeType);
+                      //print(v);
+
+                      messages.add(ChatActions(actions: v,
+                          from: from,
+                          sendAction: _sendMessage));
+                    }
+
                     if(from!='user' && w!=null)
                       widget.watermark = w;
                   }
+
+                  WidgetsBinding.instance!
+                      .addPostFrameCallback((_){
+                    print("Post Frame");
+                    _scrollBottom();
+                  });
+
 
                 } catch(e) {}
 
@@ -275,7 +288,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     return messages[index];
                   },
                 );
-
               }else {
                 return Center(child: const Text('...'));
               }
@@ -292,6 +304,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: <Widget>[
                   GestureDetector(
                     onTap: (){
+                      _scrollBottom();
                     },
                     child: Container(
                       height: 30,
@@ -300,7 +313,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         color: Colors.lightBlue,
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      child: Icon(Icons.add, color: Colors.white, size: 20, ),
+                      child: Icon(Icons.arrow_downward, color: Colors.white, size: 20, ),
                     ),
                   ),
                   SizedBox(width: 15,),

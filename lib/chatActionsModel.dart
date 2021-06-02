@@ -1,42 +1,35 @@
 import 'package:flutter/material.dart';
+import 'actionModel.dart';
 
 class ChatActions extends StatelessWidget {
 
-  final Object content;
+  final List<dynamic> actions;
   final String from;
   final Function(String) sendAction;
 
-  ChatActions({Key? key, required this.content, required this.from, required this.sendAction}) : super(key: key);
+  ChatActions({Key? key, required this.actions, required this.from, required this.sendAction}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+
+    print("actions :\n");
+    print(actions);
 
       return Container(
         padding: EdgeInsets.only(left: 14, right: 14, top: 8, bottom: 8),
           child: Wrap(
             direction: Axis.horizontal,
-            children: [
-              ActionChip(
-                  avatar: CircleAvatar(
-                    backgroundColor: Colors.grey.shade800,
-                    child: const Text('NM'),
-                  ),
-                  label: const Text('Nathalie Matheu'),
+            spacing: 5.0,
+            runSpacing: 10.0,
+            children: List<Widget>.generate(actions.length, (int index) {
+              return ActionChip(
+                  label: Text(actions[index].title),
+                  backgroundColor: Colors.amber,
                   onPressed: () {
-                    sendAction('Nathalie Matheu');
+                    sendAction(actions[index].value);
                   }
-              ),
-              ActionChip(
-                  avatar: CircleAvatar(
-                    backgroundColor: Colors.amber,
-                    child: const Text('SC'),
-                  ),
-                  label: const Text('Samuel Calegari'),
-                  onPressed: () {
-                    sendAction('Samuel Calegari');
-                  }
-              )
-            ],
+              );
+            }),
           ),
       );
     }
