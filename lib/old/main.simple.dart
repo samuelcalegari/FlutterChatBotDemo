@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:chatdemo/chatMessageModel.simple.dart';
+import 'package:chatdemo/old/chatMessageModel.simple.dart';
 
 
 void main() {
