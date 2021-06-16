@@ -238,12 +238,36 @@ class _MyHomePageState extends State<MyHomePage> {
                   int? w;
                   dynamic obj = jsonDecode(snapshot.data);
                   String from = obj['activities'][0]['from']['id'];
-                  var suggestedActions = obj['activities'][0]['suggestedActions'] ?? null;
-                  var attachments = obj['activities'][0]['attachments'] ?? null;
+                  final suggestedActions = obj['activities'][0]['suggestedActions'] ?? null;
+                  final attachments = obj['activities'][0]['attachments'] ?? null;
 
-                  //print('\n#########################\n');
-                  //print(obj);
+                  print('\n#########################\n');
+                  print(obj);
                   //print(obj['watermark']);
+                  //print(suggestedActions);
+
+                  if (attachments != null) {
+
+                    //attachments.forEach((e) => print(e));
+
+                    List<dynamic> c = attachments
+                        .map((e) => CardInfos(
+                    type: e['contentType'],
+                    title: e['content']['title'],
+                    text: e['content']['text'],
+                    urlImg: e['content']['images'][0]['url'],
+                    actions: e['content']['buttons']
+                        .map((e) => ActionInfos(
+                    type: e['type'],
+                    title: e['title'],
+                    value: e['value']))
+                        .toList()))
+                        .toList();
+
+                    messages.add(ChatCards(
+                    cardsinfos: c, from: from, sendAction: _sendMessage));
+                    }
+
 
                   if (from != 'user') {
                     w = int.tryParse(obj['watermark']);
@@ -254,40 +278,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     messages.add(ChatMessage(
                         content: obj['activities'][0]['text'], from: from));
 
-                    if (suggestedActions != null) {
-                      List<dynamic> a = suggestedActions['actions']
-                          .map((e) => Act(
-                              type: e['type'],
-                              title: e['title'],
-                              value: e['value']))
-                          .toList();
-
-                      messages.add(ChatActions(
-                          actions: a, from: from, sendAction: _sendMessage));
-                    }
-
-                    if (attachments != null) {
-                      //attachments.forEach((e) => print(e));
-
-                      List<dynamic> c = attachments
-                          .map((e) => CardInfos(
-                          type: e['contentType'],
-                          title: e['content']['title'],
-                          text: e['content']['text'],
-                          urlImg: e['content']['images'][0]['url'],
-                          actions: e['content']['buttons']
-                              .map((e) => Act(
-                              type: e['type'],
-                              title: e['title'],
-                              value: e['value']))
-                              .toList()))
-                          .toList();
-
-                      messages.add(ChatCards(
-                          cardsinfos: c, from: from, sendAction: _sendMessage));
-                    }
-
                     if (from != 'user' && w != null) widget.watermark = w;
+                  }
+
+                  if (suggestedActions != null) {
+                    List<dynamic> a = suggestedActions['actions']
+                        .map((e) => ActionInfos(
+                        type: e['type'],
+                        title: e['title'],
+                        value: e['value']))
+                        .toList();
+
+                    messages.add(ChatActions(
+                        actions: a, from: from, sendAction: _sendMessage));
                   }
 
                   // AutoScroll when data incoming
