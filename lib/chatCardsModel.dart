@@ -16,7 +16,7 @@ class ChatCards extends StatelessWidget {
   List<Widget> _buildButtons(l) {
     List<Widget> buttonsList = [];
     for (int i = 0; i < l.length; i++) {
-      buttonsList.add(new TextButton(
+      buttonsList.add(new ElevatedButton(
           onPressed: () => {
                 (l[i].type == "openUrl")
                     ? launch(l[i].value)
@@ -32,10 +32,10 @@ class ChatCards extends StatelessWidget {
     for (int i = 0; i < l.length; i++) {
       buttonsList.add(new ElevatedButton(
           onPressed: () => {
-            (l[i].type == "Action.OpenUrl")
-                ? launch(l[i].value)
-                : sendAction(l[i].value)
-          },
+                (l[i].type == "Action.OpenUrl")
+                    ? launch(l[i].value)
+                    : sendAction(l[i].value)
+              },
           child: Text(l[i].title)));
     }
     return buttonsList;
@@ -62,9 +62,20 @@ class ChatCards extends StatelessWidget {
                         Container(
                           width: 300,
                           padding: EdgeInsets.all(20),
+                          decoration: new BoxDecoration(
+                            gradient: new LinearGradient(
+                                colors: [
+                                  const Color(0xFF3366FF),
+                                  const Color(0xFF0099FF),
+                                ],
+                                begin: const FractionalOffset(0.0, 0.0),
+                                end: const FractionalOffset(1.0, 0.0),
+                                stops: [0.0, 1.0],
+                                tileMode: TileMode.clamp),
+                          ),
                           child: Text(
                             cardsinfos[index].title,
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -103,15 +114,26 @@ class ChatCards extends StatelessWidget {
                         Container(
                           width: 300,
                           padding: EdgeInsets.all(20),
+                          decoration: new BoxDecoration(
+                            gradient: new LinearGradient(
+                                colors: [
+                                  const Color(0xFF3366FF),
+                                  const Color(0xFF0099FF),
+                                ],
+                                begin: const FractionalOffset(0.0, 0.0),
+                                end: const FractionalOffset(1.0, 0.0),
+                                stops: [0.0, 1.0],
+                                tileMode: TileMode.clamp),
+                          ),
                           child: Text(
                             cardsinfos[index].title,
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Container(
                           width: 300,
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(20),
                           child: Text(
                             cardsinfos[index].text,
                             textAlign: TextAlign.center,
@@ -126,7 +148,7 @@ class ChatCards extends StatelessWidget {
                             )),
                         Container(
                             width: 300,
-                            padding: EdgeInsets.all(10),
+                            padding: EdgeInsets.fromLTRB(10, 10, 10, 50),
                             child: Text(
                               cardsinfos[index].subElement2,
                               textAlign: TextAlign.center,

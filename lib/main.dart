@@ -252,8 +252,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (attachments != null) {
                     List<dynamic> c = attachments.map((e) {
 
-                      print(e['content']['body'][5]['actions']);
-
                       if (e['contentType'] ==
                           'application/vnd.microsoft.card.hero') {
                         return CardInfos(
