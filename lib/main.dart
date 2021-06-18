@@ -238,43 +238,62 @@ class _MyHomePageState extends State<MyHomePage> {
                   int? w;
                   dynamic obj = jsonDecode(snapshot.data);
                   String from = obj['activities'][0]['from']['id'];
-                  final suggestedActions = obj['activities'][0]['suggestedActions'] ?? null;
-                  final attachments = obj['activities'][0]['attachments'] ?? null;
+                  final suggestedActions =
+                      obj['activities'][0]['suggestedActions'] ?? null;
+                  final attachments =
+                      obj['activities'][0]['attachments'] ?? null;
 
                   print('\n#########################\n');
-                  print(obj);
+                  //print(obj);
                   //print(obj['watermark']);
                   //print(suggestedActions);
+                  //print(attachments);
 
                   if (attachments != null) {
+                    List<dynamic> c = attachments.map((e) {
 
-                    //attachments.forEach((e) => print(e));
+                      if (e['contentType'] ==
+                          'application/vnd.microsoft.card.hero') {
+                        return CardInfos(
+                            type: e['contentType'],
+                            title: e['content']['title'],
+                            text: e['content']['text'],
+                            urlImg: e['content']['images'][0]['url'],
+                            actions: e['content']['buttons']
+                                .map((e) => ActionInfos(
+                                    type: e['type'],
+                                    title: e['title'],
+                                    value: e['value']))
+                                .toList());
+                      } else {
 
-                    List<dynamic> c = attachments
-                        .map((e) => CardInfos(
-                    type: e['contentType'],
-                    title: e['content']['title'],
-                    text: e['content']['text'],
-                    urlImg: e['content']['images'][0]['url'],
-                    actions: e['content']['buttons']
-                        .map((e) => ActionInfos(
-                    type: e['type'],
-                    title: e['title'],
-                    value: e['value']))
-                        .toList()))
-                        .toList();
+                        final se1 = e['content']['body'][4]['columns'][0]['items'][0]['text'] + '\n' + e['content']['body'][4]['columns'][0]['items'][1]['text'];
+                        final se2 = e['content']['body'][4]['columns'][1]['items'][0]['text'] + '\n' +  e['content']['body'][4]['columns'][1]['items'][1]['text'];
+
+                        return CardInfos2(
+                            type: e['contentType'],
+                            title: e['content']['body'][1]['text'],
+                            text: e['content']['body'][2]['text'],
+                            subElement1: se1,
+                            subElement2: se2,
+                            actions: []/* e['content']['body'][5]['actions']
+                                .map((e) => ActionInfos(
+                                type: e['type'],
+                                title: e['title'],
+                                value: e['value']))
+                                .toList()*/);
+                      }
+                    }).toList();
 
                     messages.add(ChatCards(
-                    cardsinfos: c, from: from, sendAction: _sendMessage));
-                    }
-
+                        cardsinfos: c, from: from, sendAction: _sendMessage));
+                  }
 
                   if (from != 'user') {
                     w = int.tryParse(obj['watermark']);
                   }
 
                   if ((from == "user") || (w != widget.watermark)) {
-
                     messages.add(ChatMessage(
                         content: obj['activities'][0]['text'], from: from));
 
@@ -284,9 +303,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (suggestedActions != null) {
                     List<dynamic> a = suggestedActions['actions']
                         .map((e) => ActionInfos(
-                        type: e['type'],
-                        title: e['title'],
-                        value: e['value']))
+                            type: e['type'],
+                            title: e['title'],
+                            value: e['value']))
                         .toList();
 
                     messages.add(ChatActions(
