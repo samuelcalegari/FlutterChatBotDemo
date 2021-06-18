@@ -252,6 +252,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (attachments != null) {
                     List<dynamic> c = attachments.map((e) {
 
+                      print(e['content']['body'][5]['actions']);
+
                       if (e['contentType'] ==
                           'application/vnd.microsoft.card.hero') {
                         return CardInfos(
@@ -276,12 +278,12 @@ class _MyHomePageState extends State<MyHomePage> {
                             text: e['content']['body'][2]['text'],
                             subElement1: se1,
                             subElement2: se2,
-                            actions: []/* e['content']['body'][5]['actions']
+                            actions: e['content']['body'][5]['actions']
                                 .map((e) => ActionInfos(
                                 type: e['type'],
                                 title: e['title'],
-                                value: e['value']))
-                                .toList()*/);
+                                value: e['url']))
+                                .toList());
                       }
                     }).toList();
 

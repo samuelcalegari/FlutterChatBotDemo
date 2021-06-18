@@ -27,6 +27,20 @@ class ChatCards extends StatelessWidget {
     return buttonsList;
   }
 
+  List<Widget> _buildButtons2(l) {
+    List<Widget> buttonsList = [];
+    for (int i = 0; i < l.length; i++) {
+      buttonsList.add(new ElevatedButton(
+          onPressed: () => {
+            (l[i].type == "Action.OpenUrl")
+                ? launch(l[i].value)
+                : sendAction(l[i].value)
+          },
+          child: Text(l[i].title)));
+    }
+    return buttonsList;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -120,7 +134,7 @@ class ChatCards extends StatelessWidget {
                         Wrap(
                             direction: Axis.vertical,
                             crossAxisAlignment: WrapCrossAlignment.center,
-                            children: _buildButtons(cardsinfos[index].actions))
+                            children: _buildButtons2(cardsinfos[index].actions))
                       ],
                     )),
               );
