@@ -13,6 +13,86 @@ class ChatCards extends StatelessWidget {
       required this.sendAction})
       : super(key: key);
 
+  Map<String,Color> _getColors(t) {
+
+    Map<String, Color> c = new Map();
+
+    switch (t) {
+      case 'assign':
+        {
+          c['start'] = const Color(0xFFFF6633);
+          c['end'] = const Color(0xFFFF9933);
+        }
+        break;
+
+      case 'zoom':
+        {
+          c['start'] = const Color(0xFF50C728);
+          c['end'] = Color(0xFF99FF33);
+        }
+        break;
+
+      default:
+        {
+          c['start'] = const Color(0xFF3366FF);
+          c['end'] = Color(0xFF0099FF);
+        }
+        break;
+    }
+
+    return c;
+  }
+
+  BoxDecoration _getHeaderDecoration(t) {
+
+    Map<String, Color> c = _getColors(t);
+
+    return new BoxDecoration(
+      gradient: new LinearGradient(
+          colors: [
+            c["start"]!,
+            c["end"]!,
+          ],
+          begin: const FractionalOffset(0.0, 0.0),
+          end: const FractionalOffset(1.0, 0.0),
+          stops: [0.0, 1.0],
+          tileMode: TileMode.clamp),
+    );
+  }
+
+  CircleAvatar _getIcon(t) {
+
+    Map<String, Color> c = _getColors(t);
+
+    IconData ico;
+
+    switch (t) {
+      case 'assign':
+        {
+          ico = Icons.school;
+        }
+        break;
+
+      case 'zoom':
+        {
+          ico = Icons.video_call;
+        }
+        break;
+
+      default:
+        {
+          ico = Icons.info;
+        }
+        break;
+    }
+
+    return CircleAvatar(
+      backgroundColor: c["start"],
+      radius: 30,
+      child: Icon(ico, color: Colors.white,),
+    );
+  }
+
   List<Widget> _buildButtons(l) {
     List<Widget> buttonsList = [];
     for (int i = 0; i < l.length; i++) {
@@ -62,20 +142,12 @@ class ChatCards extends StatelessWidget {
                         Container(
                           width: 300,
                           padding: EdgeInsets.all(20),
-                          decoration: new BoxDecoration(
-                            gradient: new LinearGradient(
-                                colors: [
-                                  const Color(0xFF3366FF),
-                                  const Color(0xFF0099FF),
-                                ],
-                                begin: const FractionalOffset(0.0, 0.0),
-                                end: const FractionalOffset(1.0, 0.0),
-                                stops: [0.0, 1.0],
-                                tileMode: TileMode.clamp),
-                          ),
+                          decoration: _getHeaderDecoration('default'),
                           child: Text(
                             cardsinfos[index].title,
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -114,31 +186,28 @@ class ChatCards extends StatelessWidget {
                         Container(
                           width: 300,
                           padding: EdgeInsets.all(20),
-                          decoration: new BoxDecoration(
-                            gradient: new LinearGradient(
-                                colors: [
-                                  const Color(0xFF3366FF),
-                                  const Color(0xFF0099FF),
-                                ],
-                                begin: const FractionalOffset(0.0, 0.0),
-                                end: const FractionalOffset(1.0, 0.0),
-                                stops: [0.0, 1.0],
-                                tileMode: TileMode.clamp),
-                          ),
+                          decoration:
+                              _getHeaderDecoration(cardsinfos[index].template),
                           child: Text(
                             cardsinfos[index].title,
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
-                        Container(
+                        /*Container(
                           width: 300,
                           padding: EdgeInsets.all(20),
                           child: Text(
                             cardsinfos[index].text,
                             textAlign: TextAlign.center,
                           ),
-                        ),
+                        ),*/
+                        Container(
+                            width: 300,
+                            padding: EdgeInsets.all(20),
+                            child: _getIcon(cardsinfos[index].template)),
                         Container(
                             width: 300,
                             padding: EdgeInsets.all(10),

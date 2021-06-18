@@ -267,21 +267,28 @@ class _MyHomePageState extends State<MyHomePage> {
                                 .toList());
                       } else {
 
-                        final se1 = e['content']['body'][4]['columns'][0]['items'][0]['text'] + '\n' + e['content']['body'][4]['columns'][0]['items'][1]['text'];
-                        final se2 = e['content']['body'][4]['columns'][1]['items'][0]['text'] + '\n' +  e['content']['body'][4]['columns'][1]['items'][1]['text'];
+                        final _se1 = e['content']['body'][4]['columns'][0]['items'][0]['text'] + '\n' + e['content']['body'][4]['columns'][0]['items'][1]['text'];
+                        final _se2 = e['content']['body'][4]['columns'][1]['items'][0]['text'] + '\n' +  e['content']['body'][4]['columns'][1]['items'][1]['text'];
+
+                        final _url = e['content']['body'][5]['actions'][0]['url'];
+
+                        var re = RegExp(r'(?<=mod\/)(.*)(?=\/view)');
+                        var match = re.firstMatch(_url);
+                        var _template = (match != null)  ? match.group(0) : "default";
 
                         return CardInfos2(
                             type: e['contentType'],
+                            template : _template.toString(),
                             title: e['content']['body'][1]['text'],
                             text: e['content']['body'][2]['text'],
-                            subElement1: se1,
-                            subElement2: se2,
-                            actions: e['content']['body'][5]['actions']
-                                .map((e) => ActionInfos(
-                                type: e['type'],
-                                title: e['title'],
-                                value: e['url']))
-                                .toList());
+                            subElement1: _se1,
+                            subElement2: _se2,
+                            actions: [ ActionInfos(
+                                type: e['content']['body'][5]['actions'][0]['type'],
+                                title: e['content']['body'][5]['actions'][0]['title'],
+                                value: _url
+                            )
+                            ]);
                       }
                     }).toList();
 
