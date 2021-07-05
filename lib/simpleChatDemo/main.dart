@@ -1,12 +1,6 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:chatdemo/old/chatMessageModel.simple.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/status.dart' as status;
+import 'package:chatdemo/simpleChatDemo/chatMessageModel.simple.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -47,12 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _msgText = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String _secret = 'ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ';
-  String _token = "";
-  String _streamUrl = "";
-  String? _conversationId = "";
-  late IOWebSocketChannel _channel;
-
    _sendMessage() {
 
     setState(() {
@@ -78,45 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _msgText.text = '';
       }
     });
-  }
-
-   _getToken() async {
-
-    final response = await http.post(
-      Uri.parse('https://directline.botframework.com/v3/directline/tokens/generate'),
-      headers: {
-        HttpHeaders.authorizationHeader: "Bearer " + _secret,
-      },
-    );
-    final responseJson = jsonDecode(response.body);
-    _token = responseJson['token'];
-  }
-
-   _getStreamUrl() async {
-
-    await _getToken();
-    final response = await http.post(
-      Uri.parse('https://directline.botframework.com/v3/directline/conversations/'),
-      headers: {
-        HttpHeaders.authorizationHeader: "Bearer " + _token ,
-      },
-    );
-    final responseJson = jsonDecode(response.body);
-    _streamUrl = responseJson['streamUrl'];
-    _conversationId = responseJson['conversationId'];
-    _channel = IOWebSocketChannel.connect(_streamUrl);
-  }
-
-  @override
-  void initState() {
-    _getStreamUrl();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _channel.sink.close();
-    super.dispose();
   }
 
   @override
