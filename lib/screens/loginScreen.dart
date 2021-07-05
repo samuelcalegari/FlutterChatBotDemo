@@ -18,31 +18,31 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _password = TextEditingController();
 
   void _auth() async {
-    final resp = await http.get(Uri.parse(
-        APIConstants.MOODLE_BASE_URL + APIOperations.getTokenByLoginMoodle + '&username=' +
-    _login.text +
-    '&password=' +
-    _password.text
-       ));
+    final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
+        APIOperations.getTokenByLoginMoodle +
+        '&username=' +
+        _login.text +
+        '&password=' +
+        _password.text));
 
     if (resp.statusCode == 200) {
       dynamic data = jsonDecode(resp.body);
       var token = data["token"];
 
       if (token != null) {
-        final resp = await http.get(Uri.parse(
-            APIConstants.MOODLE_BASE_URL + APIOperations.fetchUserDetailMoodle + '&wstoken=' +
-                token));
+        final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
+            APIOperations.fetchUserDetailMoodle +
+            '&wstoken=' +
+            token));
 
         if (resp.statusCode == 200) {
+          User u = User.fromJson(jsonDecode(resp.body));
 
-         User u = User.fromJson(jsonDecode(resp.body));
-
-         Navigator.pushReplacement(
-           context,
-           new MaterialPageRoute(builder: (context) => new ChatScreen(user:u)),
-         );
-
+          Navigator.pushReplacement(
+            context,
+            new MaterialPageRoute(
+                builder: (context) => new ChatScreen(user: u)),
+          );
         } else {
           throw Exception('Unable to connect server');
         }
@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: Styles.kBoxDecorationStyle,
           height: 60.0,
           child: TextField(
-            //obscureText: true,
+            obscureText: true,
             controller: _password,
             style: TextStyle(
               color: Colors.black,

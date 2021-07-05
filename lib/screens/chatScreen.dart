@@ -13,7 +13,6 @@ import 'package:chatdemo/models/ChatMessageModel.dart';
 import 'package:chatdemo/models/ChatActionsModel.dart';
 import 'package:chatdemo/models/User.dart';
 
-String _secret = 'ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ';
 String _token = '';
 String _streamUrl = '';
 String _conversationId = '';
@@ -23,7 +22,7 @@ Future<String> _getToken() async {
     Uri.parse(
         APIConstants.DIRECTLINE_BASE_URL+APIOperations.getTokenFromDirectLine),
     headers: {
-      HttpHeaders.authorizationHeader: "Bearer " + _secret,
+      HttpHeaders.authorizationHeader: "Bearer " + APITokens.DIRECTLINE_TOKEN,
     },
   );
   final responseJson = jsonDecode(response.body);
@@ -95,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context, AsyncSnapshot<String> snapshot) {
           if (snapshot.hasData) {
             return MaterialApp(
-              title: 'Miro Bot Demo',
+              title: Config.APP_NAME,
               debugShowCheckedModeBanner: false,
               theme: ThemeData(
                 primarySwatch: Colors.blue,
@@ -103,7 +102,14 @@ class _ChatScreenState extends State<ChatScreen> {
               home: MyHomePage(channel: IOWebSocketChannel.connect(_streamUrl)),
             );
           } else {
-            return CircularProgressIndicator();
+            return MaterialApp(
+              title: Config.APP_NAME,
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+              ),
+              home: CircularProgressIndicator(),
+            );
           }
         }
     );
@@ -213,7 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Text(
-                        "Miro Bot",
+                        Config.APP_NAME,
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),

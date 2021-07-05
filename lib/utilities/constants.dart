@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+class Config {
+  static const String APP_NAME = "Miro Bot";
+}
+
 class APIConstants {
   static const String MOODLE_BASE_URL = "https://forco.univ-perp.fr/";
   static const String DIRECTLINE_BASE_URL = "https://directline.botframework.com/v3/directline/";
@@ -12,6 +16,10 @@ class APIOperations {
   static final String getTokenByLoginMoodle  = "login/token.php?service=moodle_mobile_app&moodlewsrestformat=json";
   static final String getTokenFromDirectLine = "tokens/generate";
   static final String getConversation = "conversations/";
+}
+
+class APITokens {
+  static const String DIRECTLINE_TOKEN = "ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ";
 }
 
 class Styles {

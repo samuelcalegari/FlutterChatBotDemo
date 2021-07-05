@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:chatdemo/utilities/constants.dart';
 import 'package:chatdemo/screens/loginScreen.dart';
 
 void main() => runApp(MyApp());
@@ -13,7 +14,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Miro Bot',
+      title: Config.APP_NAME,
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
     );
