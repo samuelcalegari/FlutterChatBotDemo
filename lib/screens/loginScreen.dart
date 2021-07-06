@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _login = TextEditingController();
   TextEditingController _password = TextEditingController();
 
+  // Retrieve user from login and password, redirect to char view
   void _auth() async {
     final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
         APIOperations.getTokenByLoginMoodle +
@@ -54,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Email / Login Field Widget
   Widget _buildEmailTF() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Password field Widget
   Widget _buildPasswordTF() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,6 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Password lost button Widget
   Widget _buildForgotPasswordBtn() {
     return Container(
       alignment: Alignment.centerRight,
@@ -138,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Checkbox Widget
   Widget _buildRememberMeCheckbox() {
     return Container(
       height: 20.0,
@@ -165,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Login button Widget
   Widget _buildLoginBtn() {
     return Container(
         padding: EdgeInsets.symmetric(vertical: 25.0),
@@ -175,6 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text('Se Connecter')));
   }
 
+  // Build Login Page
   @override
   Widget build(BuildContext context) {
     return Scaffold(

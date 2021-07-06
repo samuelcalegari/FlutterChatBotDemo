@@ -17,12 +17,13 @@ String _token = '';
 String _streamUrl = '';
 String _conversationId = '';
 
+// Get Token From Direct Line
 Future<String> _getToken() async {
   final response = await http.post(
     Uri.parse(
         APIConstants.DIRECTLINE_BASE_URL+APIOperations.getTokenFromDirectLine),
     headers: {
-      HttpHeaders.authorizationHeader: "Bearer " + APITokens.DIRECTLINE_TOKEN,
+      HttpHeaders.authorizationHeader: "Bearer " + APIConstants.DIRECTLINE_SECRET,
     },
   );
   final responseJson = jsonDecode(response.body);
@@ -31,6 +32,7 @@ Future<String> _getToken() async {
   return _token;
 }
 
+// Get WebStream to real-time chat
 Future<String> _getStreamUrl() async {
   await _getToken();
   final response = await http.post(
@@ -50,6 +52,7 @@ Future<String> _getStreamUrl() async {
   return _streamUrl;
 }
 
+// Send message to Direct Line
 _sendMessage(msg) async {
   final fmsg = jsonEncode({
     "locale": "fr-FR",
