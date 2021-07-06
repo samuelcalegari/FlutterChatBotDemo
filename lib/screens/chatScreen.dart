@@ -12,6 +12,7 @@ import 'package:chatdemo/models/ChatCardsModel.dart';
 import 'package:chatdemo/models/ChatMessageModel.dart';
 import 'package:chatdemo/models/ChatActionsModel.dart';
 import 'package:chatdemo/models/User.dart';
+import 'package:chatdemo/screens/profileScreen.dart';
 
 String _token = '';
 String _streamUrl = '';
@@ -20,10 +21,11 @@ String _conversationId = '';
 // Get Token From Direct Line
 Future<String> _getToken() async {
   final response = await http.post(
-    Uri.parse(
-        APIConstants.DIRECTLINE_BASE_URL+APIOperations.getTokenFromDirectLine),
+    Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
+        APIOperations.getTokenFromDirectLine),
     headers: {
-      HttpHeaders.authorizationHeader: "Bearer " + APIConstants.DIRECTLINE_SECRET,
+      HttpHeaders.authorizationHeader:
+          "Bearer " + APIConstants.DIRECTLINE_SECRET,
     },
   );
   final responseJson = jsonDecode(response.body);
@@ -36,8 +38,7 @@ Future<String> _getToken() async {
 Future<String> _getStreamUrl() async {
   await _getToken();
   final response = await http.post(
-    Uri.parse(
-        APIConstants.DIRECTLINE_BASE_URL+APIOperations.getConversation),
+    Uri.parse(APIConstants.DIRECTLINE_BASE_URL + APIOperations.getConversation),
     headers: {
       HttpHeaders.authorizationHeader: "Bearer " + _token,
     },
@@ -62,10 +63,10 @@ _sendMessage(msg) async {
   });
 
   final response = await http.post(
-    Uri.parse(
-        APIConstants.DIRECTLINE_BASE_URL+APIOperations.getConversation +
-            _conversationId +
-            '/activities'),
+    Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
+        APIOperations.getConversation +
+        _conversationId +
+        '/activities'),
     headers: {
       HttpHeaders.authorizationHeader: "Bearer " + _token,
       HttpHeaders.contentTypeHeader: "application/json"
@@ -78,8 +79,7 @@ _sendMessage(msg) async {
   print(responseJson);
 }
 
-class ChatScreen  extends StatefulWidget {
-
+class ChatScreen extends StatefulWidget {
   final User user;
 
   const ChatScreen({Key? key, required this.user}) : super(key: key);
@@ -89,7 +89,6 @@ class ChatScreen  extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-
   @override
   Widget build(context) {
     return FutureBuilder<String>(
@@ -102,28 +101,26 @@ class _ChatScreenState extends State<ChatScreen> {
               theme: ThemeData(
                 primarySwatch: Colors.blue,
               ),
-              home: MyHomePage(channel: IOWebSocketChannel.connect(_streamUrl)),
+              home: MyHomePage(
+                  channel: IOWebSocketChannel.connect(_streamUrl),
+                  user: widget.user),
             );
           } else {
-            return MaterialApp(
-              title: Config.APP_NAME,
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                primarySwatch: Colors.blue,
-              ),
-              home: CircularProgressIndicator(),
+            return Scaffold(
+              body: Center(child: CircularProgressIndicator()),
             );
           }
-        }
-    );
+        });
   }
 }
 
 class MyHomePage extends StatefulWidget {
   WebSocketChannel channel;
+  User user;
   int watermark = 0;
 
-  MyHomePage({Key? key, required this.channel}) : super(key: key);
+  MyHomePage({Key? key, required this.channel, required this.user})
+      : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -209,8 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   width: 10,
                 ),
                 CircleAvatar(
-                  backgroundImage: NetworkImage(
-                      APIConstants.BOTAVATAR),
+                  backgroundImage: NetworkImage(APIConstants.BOTAVATAR),
                   maxRadius: 20,
                 ),
                 SizedBox(
@@ -237,10 +233,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.settings,
-                  color: Colors.black54,
-                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProfileScreen(user: widget.user),
+                        ));
+                  },
+                  icon: Icon(
+                    Icons.settings,
+                    color: Colors.black54,
+                  ),
+                )
               ],
             ),
           ),
@@ -255,7 +261,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Center(
                     child: ElevatedButton(
                         onPressed: _startConversation,
-                        child: const Text('Start')));
+                        child: const Text('Démarrer')));
               }
 
               if (snapshot.hasError) {
@@ -279,7 +285,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   if (attachments != null) {
                     List<dynamic> c = attachments.map((e) {
-
                       if (e['contentType'] ==
                           'application/vnd.microsoft.card.hero') {
                         return CardInfos(
@@ -289,33 +294,44 @@ class _MyHomePageState extends State<MyHomePage> {
                             urlImg: e['content']['images'][0]['url'],
                             actions: e['content']['buttons']
                                 .map((e) => ActionInfos(
-                                type: e['type'],
-                                title: e['title'],
-                                value: e['value']))
+                                    type: e['type'],
+                                    title: e['title'],
+                                    value: e['value']))
                                 .toList());
                       } else {
+                        final _se1 = e['content']['body'][4]['columns'][0]
+                                ['items'][0]['text'] +
+                            '\n' +
+                            e['content']['body'][4]['columns'][0]['items'][1]
+                                ['text'];
+                        final _se2 = e['content']['body'][4]['columns'][1]
+                                ['items'][0]['text'] +
+                            '\n' +
+                            e['content']['body'][4]['columns'][1]['items'][1]
+                                ['text'];
 
-                        final _se1 = e['content']['body'][4]['columns'][0]['items'][0]['text'] + '\n' + e['content']['body'][4]['columns'][0]['items'][1]['text'];
-                        final _se2 = e['content']['body'][4]['columns'][1]['items'][0]['text'] + '\n' +  e['content']['body'][4]['columns'][1]['items'][1]['text'];
-
-                        final _url = e['content']['body'][5]['actions'][0]['url'];
+                        final _url =
+                            e['content']['body'][5]['actions'][0]['url'];
 
                         var re = RegExp(r'(?<=mod\/)(.*)(?=\/view)');
                         var match = re.firstMatch(_url);
-                        var _template = (match != null)  ? match.group(0) : "default";
+                        var _template =
+                            (match != null) ? match.group(0) : "default";
 
                         return CardInfos2(
                             type: e['contentType'],
-                            template : _template.toString(),
+                            template: _template.toString(),
                             title: e['content']['body'][1]['text'],
                             text: e['content']['body'][2]['text'],
                             subElement1: _se1,
                             subElement2: _se2,
-                            actions: [ ActionInfos(
-                                type: e['content']['body'][5]['actions'][0]['type'],
-                                title: e['content']['body'][5]['actions'][0]['title'],
-                                value: _url
-                            )
+                            actions: [
+                              ActionInfos(
+                                  type: e['content']['body'][5]['actions'][0]
+                                      ['type'],
+                                  title: e['content']['body'][5]['actions'][0]
+                                      ['title'],
+                                  value: _url)
                             ]);
                       }
                     }).toList();
@@ -338,9 +354,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (suggestedActions != null) {
                     List<dynamic> a = suggestedActions['actions']
                         .map((e) => ActionInfos(
-                        type: e['type'],
-                        title: e['title'],
-                        value: e['value']))
+                            type: e['type'],
+                            title: e['title'],
+                            value: e['value']))
                         .toList();
 
                     messages.add(ChatActions(
@@ -429,4 +445,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-

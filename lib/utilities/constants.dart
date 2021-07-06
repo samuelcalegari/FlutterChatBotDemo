@@ -25,11 +25,20 @@ class Styles {
     color: Colors.black26,
     fontFamily: 'OpenSans',
   );
+
   static final kLabelStyle = TextStyle(
     color: Colors.white,
     fontWeight: FontWeight.bold,
     fontFamily: 'OpenSans',
   );
+
+  static final kTitleStyle = TextStyle(
+    color: Colors.black54,
+    fontWeight: FontWeight.bold,
+    fontSize: 20,
+    fontFamily: 'OpenSans',
+  );
+
   static final kBoxDecorationStyle = BoxDecoration(
     //color: Color(0xFF03A9F4),
     color: Colors.white,
@@ -42,6 +51,7 @@ class Styles {
       ),
     ],
   );
+
   static final KButtonStyle = ElevatedButton.styleFrom(
     primary: Color(0xFF03A9F4),
     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18),
