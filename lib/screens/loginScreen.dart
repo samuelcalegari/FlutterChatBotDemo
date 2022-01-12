@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:chatdemo/models/CustomException.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -13,12 +14,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _rememberMe = false;
   TextEditingController _login = TextEditingController();
   TextEditingController _password = TextEditingController();
 
   // Retrieve user from login and password, redirect to char view
-  void _auth() async {
+  Future<void> _auth() async {
     final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
         APIOperations.getTokenByLoginMoodle +
         '&username=' +
@@ -45,13 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 builder: (context) => new ChatScreen(user: u)),
           );
         } else {
-          throw Exception('Unable to connect server');
+          throw CustomException('Impossible de se connecter au serveur');
         }
       } else {
-        throw Exception('Failed to login');
+        throw CustomException('Les identifiants sont incorrects');
       }
     } else {
-      throw Exception('Unable to connect server');
+      throw CustomException('Impossible de se connecter au serveur');
     }
   }
 
@@ -128,57 +128,51 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Password lost button Widget
-  Widget _buildForgotPasswordBtn() {
-    return Container(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () => print('Forgot Password Button Pressed'),
-        child: Text(
-          'Mot de passe perdu ?',
-          style: Styles.kLabelStyle,
-        ),
-      ),
-    );
-  }
-
-  // Checkbox Widget
-  Widget _buildRememberMeCheckbox() {
-    return Container(
-      height: 20.0,
-      child: Row(
-        children: <Widget>[
-          Theme(
-            data: ThemeData(unselectedWidgetColor: Colors.white),
-            child: Checkbox(
-              value: _rememberMe,
-              checkColor: Colors.green,
-              activeColor: Colors.white,
-              onChanged: (value) {
-                setState(() {
-                  _rememberMe = value!;
-                });
-              },
-            ),
-          ),
-          Text(
-            'Se souvenir de moi',
-            style: Styles.kLabelStyle,
-          ),
-        ],
-      ),
-    );
-  }
-
   // Login button Widget
   Widget _buildLoginBtn() {
     return Container(
-        padding: EdgeInsets.symmetric(vertical: 25.0),
+        padding: EdgeInsets.symmetric(vertical: 20.0),
         width: double.infinity,
         child: ElevatedButton(
-            onPressed: _auth,
+            onPressed: () async {
+                try {
+                  await _auth();
+                } catch (e) {
+                  print(e);
+                  showDialog(context: context, builder: (context) {
+                    return AlertDialog(
+                      title:  Text('Désolé...'),
+                      content: SingleChildScrollView(
+                        child: ListBody(
+                          children:  <Widget>[
+                            Text(e.toString()),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text('OK'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  });
+                };
+            },
             style: Styles.KButtonStyle,
             child: Text('Se Connecter')));
+  }
+
+  Widget _buildLoginQRCodeBtn() {
+    return Container(
+        padding: EdgeInsets.symmetric(vertical: 20.0),
+        width: double.infinity,
+        child: ElevatedButton(
+            onPressed: () { print('QrCode');},
+            style: Styles.KButtonStyle,
+            child: Text('Se Connecter via QRCode')));
   }
 
   // Build Login Page
@@ -214,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   physics: AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     horizontal: 40.0,
-                    vertical: 120.0,
+                    vertical: 60.0,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -234,17 +228,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       _buildPasswordTF(),
                       SizedBox(
-                        height: 10.0,
-                      ),
-                      _buildForgotPasswordBtn(),
-                      SizedBox(
-                        height: 10.0,
-                      ),
-                      _buildRememberMeCheckbox(),
-                      SizedBox(
-                        height: 30.0,
+                        height: 20.0,
                       ),
                       _buildLoginBtn(),
+                      _buildLoginQRCodeBtn(),
                     ],
                   ),
                 ),
