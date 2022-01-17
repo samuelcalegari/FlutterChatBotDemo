@@ -7,6 +7,7 @@ class Config {
 class APIConstants {
   static const String BOTAVATAR = "https://forco.univ-perp.fr/theme/forco/bot/bot.png";
   static const String MOODLE_BASE_URL = "https://forco.univ-perp.fr/";
+  static const String MOODLE_BASE_URL_TEST = "https://cours.univ-perp.fr/";
   static const String DIRECTLINE_BASE_URL = "https://directline.botframework.com/v3/directline/";
   static const String DIRECTLINE_SECRET = "ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ";
 }
@@ -14,6 +15,7 @@ class APIConstants {
 class APIOperations {
 
   static final String fetchUserDetailMoodle  = "webservice/rest/server.php?wsfunction=core_webservice_get_site_info&moodlewsrestformat=json";
+  static final String getTokenByQrCode  = "webservice/rest/server.php?wsfunction=tool_mobile_get_tokens_for_qr_login&moodlewsrestformat=json";
   static final String getTokenByLoginMoodle  = "login/token.php?service=moodle_mobile_app&moodlewsrestformat=json";
   static final String getTokenFromDirectLine = "tokens/generate";
   static final String getConversation = "conversations/";

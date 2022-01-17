@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import 'package:chatdemo/models/CustomException.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:chatdemo/models/CustomException.dart';
+import 'package:chatdemo/screens/loginQRCodeScreen.dart';
 import 'package:chatdemo/utilities/constants.dart';
 import 'package:chatdemo/models/User.dart';
 import 'package:chatdemo/screens/chatScreen.dart';
@@ -138,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 try {
                   await _auth();
                 } catch (e) {
-                  print(e);
                   showDialog(context: context, builder: (context) {
                     return AlertDialog(
                       title:  Text('Désolé...'),
@@ -170,7 +170,13 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: EdgeInsets.symmetric(vertical: 20.0),
         width: double.infinity,
         child: ElevatedButton(
-            onPressed: () { print('QrCode');},
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                new MaterialPageRoute(
+                    builder: (context) => new LoginQRCodeScreen()),
+              );
+            },
             style: Styles.KButtonStyle,
             child: Text('Se Connecter via QRCode')));
   }
