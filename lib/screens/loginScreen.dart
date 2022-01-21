@@ -20,22 +20,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Retrieve user from login and password, redirect to char view
   Future<void> _auth() async {
-    final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
+    final url = APIConstants.MOODLE_BASE_URL +
         APIOperations.getTokenByLoginMoodle +
         '&username=' +
         _login.text +
         '&password=' +
-        _password.text));
+        _password.text;
+
+    final resp = await http.get(Uri.parse(url));
 
     if (resp.statusCode == 200) {
       dynamic data = jsonDecode(resp.body);
       var token = data["token"];
 
       if (token != null) {
-        final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL +
+        final url = APIConstants.MOODLE_BASE_URL +
             APIOperations.fetchUserDetailMoodle +
             '&wstoken=' +
-            token));
+            token;
+
+        final resp = await http.get(Uri.parse(url));
 
         if (resp.statusCode == 200) {
           User u = User.fromJson(jsonDecode(resp.body));
@@ -136,30 +140,33 @@ class _LoginScreenState extends State<LoginScreen> {
         width: double.infinity,
         child: ElevatedButton(
             onPressed: () async {
-                try {
-                  await _auth();
-                } catch (e) {
-                  showDialog(context: context, builder: (context) {
-                    return AlertDialog(
-                      title:  Text('Désolé...'),
-                      content: SingleChildScrollView(
-                        child: ListBody(
-                          children:  <Widget>[
-                            Text(e.toString()),
-                          ],
+              try {
+                await _auth();
+              } catch (e) {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text('Désolé...'),
+                        content: SingleChildScrollView(
+                          child: ListBody(
+                            children: <Widget>[
+                              Text(e.toString()),
+                            ],
+                          ),
                         ),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text('OK'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  });
-                };
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text('OK'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    });
+              }
+              ;
             },
             style: Styles.KButtonStyle,
             child: Text('Se Connecter')));

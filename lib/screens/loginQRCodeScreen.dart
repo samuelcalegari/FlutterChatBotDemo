@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:chatdemo/models/Secret.dart';
+import 'package:chatdemo/models/UserAgentClient.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -110,23 +111,25 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
   }
 
   Widget _buildLoginBtn() {
-    return  ElevatedButton(
-            onPressed: () async {
-
-             try {
-                var data = result!.code;
-                if(data != null) {
-                  Uri uri = Uri.parse(data);
-                  Map<String, String> queryParameters = uri.queryParameters;
-                  try {
-                    await _auth(queryParameters['userid'].toString(), queryParameters['qrlogin'].toString());
-                  } catch (e) {
-                    showDialog(context: context, builder: (context) {
+    return ElevatedButton(
+        onPressed: () async {
+          try {
+            var data = result!.code;
+            if (data != null) {
+              Uri uri = Uri.parse(data);
+              Map<String, String> queryParameters = uri.queryParameters;
+              try {
+                await _auth(queryParameters['userid'].toString(),
+                    queryParameters['qrlogin'].toString());
+              } catch (e) {
+                showDialog(
+                    context: context,
+                    builder: (context) {
                       return AlertDialog(
-                        title:  Text('Désolé...'),
+                        title: Text('Désolé...'),
                         content: SingleChildScrollView(
                           child: ListBody(
-                            children:  <Widget>[
+                            children: <Widget>[
                               Text(e.toString()),
                             ],
                           ),
@@ -141,19 +144,22 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
                         ],
                       );
                     });
-                  };
+              }
+              ;
 
-                  setState(() {
-                    result = null;
-                  });
-                }
-              } catch (e) {
-                showDialog(context: context, builder: (context) {
+              setState(() {
+                result = null;
+              });
+            }
+          } catch (e) {
+            showDialog(
+                context: context,
+                builder: (context) {
                   return AlertDialog(
-                    title:  Text('Désolé...'),
+                    title: Text('Désolé...'),
                     content: SingleChildScrollView(
                       child: ListBody(
-                        children:  <Widget>[
+                        children: <Widget>[
                           Text(e.toString()),
                         ],
                       ),
@@ -168,9 +174,10 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
                     ],
                   );
                 });
-              };
-            },
-            child: Text('Continuer'));
+          }
+          ;
+        },
+        child: Text('Continuer'));
   }
 
   Widget _buildQrView(BuildContext context) {
@@ -215,35 +222,39 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
   }
 
   Future<void> _auth(String userid, String qrloginkey) async {
+    Secret secret = await SecretLoader(secretPath: "secret.json").load();
 
-    Secret  secret = await SecretLoader(secretPath: "secret.json").load();
-
-    final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL_TEST +
+    // Get General Token from Specific User
+    final url = APIConstants.MOODLE_BASE_URL_TEST +
         APIOperations.getTokenByLoginMoodle +
-        '&username=' + secret.user + '&password=' + secret.pwd));
+        '&username=' +
+        Uri.encodeComponent(secret.user) +
+        '&password=' +
+        Uri.encodeComponent(secret.pwd);
+
+    final resp = await http.get(Uri.parse(url));
 
     if (resp.statusCode == 200) {
       dynamic data = jsonDecode(resp.body);
       var token = data["token"];
 
       if (token != null) {
-        final resp = await http.get(Uri.parse(APIConstants.MOODLE_BASE_URL_TEST +
-            APIOperations.getTokenByQrCode +
-            '&qrloginkey=' + qrloginkey +
-            '&userid=' + userid +
-            '&wstoken=' +
-            token));
+        final url = APIConstants.MOODLE_BASE_URL_TEST +
+            APIOperations.fetchUserDetailMoodleFromField +
+            '&field=id' +
+            '&values[0]=' +
+            userid;
+
+        final resp = await http.get(Uri.parse(url));
 
         if (resp.statusCode == 200) {
-          User u = User.fromJson(jsonDecode(resp.body));
+          User u = User.fromJson2(jsonDecode(resp.body)[0]);
 
           Navigator.pushReplacement(
             context,
             new MaterialPageRoute(
                 builder: (context) => new ChatScreen(user: u)),
           );
-        } else {
-          throw CustomException('Impossible de se connecter au serveur');
         }
       } else {
         throw CustomException('Les identifiants sont incorrects');

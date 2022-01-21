@@ -25,4 +25,14 @@ class User {
       userPictureUrl: json['userpictureurl'],
     );
   }
+  factory User.fromJson2(Map<String, dynamic> json) {
+    return User(
+      userName: json['username'],
+      firstName: json['firstname'],
+      lastName: json['lastname'],
+      lang: json['lang'],
+      userId: json['id'],
+      userPictureUrl: json['profileimageurl'],
+    );
+  }
 }

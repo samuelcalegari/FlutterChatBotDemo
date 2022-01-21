@@ -15,8 +15,10 @@ class APIConstants {
 class APIOperations {
 
   static final String fetchUserDetailMoodle  = "webservice/rest/server.php?wsfunction=core_webservice_get_site_info&moodlewsrestformat=json";
+  static final String fetchUserDetailMoodleFromField = "webservice/rest/server.php?wsfunction=core_user_get_users_by_field&moodlewsrestformat=json";
   static final String getTokenByQrCode  = "webservice/rest/server.php?wsfunction=tool_mobile_get_tokens_for_qr_login&moodlewsrestformat=json";
   static final String getTokenByLoginMoodle  = "login/token.php?service=moodle_mobile_app&moodlewsrestformat=json";
+
   static final String getTokenFromDirectLine = "tokens/generate";
   static final String getConversation = "conversations/";
 }
