@@ -7,7 +7,6 @@ class Config {
 class APIConstants {
   static const String BOTAVATAR = "https://forco.univ-perp.fr/theme/forco/bot/bot.png";
   static const String MOODLE_BASE_URL = "https://forco.univ-perp.fr/";
-  static const String MOODLE_BASE_URL_TEST = "https://cours.univ-perp.fr/";
   static const String DIRECTLINE_BASE_URL = "https://directline.botframework.com/v3/directline/";
   static const String DIRECTLINE_SECRET = "ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ";
 }

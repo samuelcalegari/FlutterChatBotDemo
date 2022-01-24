@@ -225,7 +225,7 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
     Secret secret = await SecretLoader(secretPath: "secret.json").load();
 
     // Get General Token from Specific User
-    final url = APIConstants.MOODLE_BASE_URL_TEST +
+    final url = APIConstants.MOODLE_BASE_URL +
         APIOperations.getTokenByLoginMoodle +
         '&username=' +
         Uri.encodeComponent(secret.user) +
@@ -239,22 +239,29 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
       var token = data["token"];
 
       if (token != null) {
-        final url = APIConstants.MOODLE_BASE_URL_TEST +
+        final url = APIConstants.MOODLE_BASE_URL +
             APIOperations.fetchUserDetailMoodleFromField +
             '&field=id' +
-            '&values[0]=' +
-            userid;
+            '&values[0]=' + userid +
+            '&wstoken=' + token;
+
+        print(url);
 
         final resp = await http.get(Uri.parse(url));
 
         if (resp.statusCode == 200) {
-          User u = User.fromJson2(jsonDecode(resp.body)[0]);
 
-          Navigator.pushReplacement(
-            context,
-            new MaterialPageRoute(
-                builder: (context) => new ChatScreen(user: u)),
-          );
+          try {
+            User u = User.fromJson2(jsonDecode(resp.body)[0]);
+
+            Navigator.pushReplacement(
+              context,
+              new MaterialPageRoute(
+                  builder: (context) => new ChatScreen(user: u)),
+            );
+          } catch(e) {
+            throw CustomException('Impossible de récupérer votre profil');
+          }
         }
       } else {
         throw CustomException('Les identifiants sont incorrects');
