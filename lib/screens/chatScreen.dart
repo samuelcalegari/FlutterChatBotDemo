@@ -20,16 +20,16 @@ import '../utilities/constants.dart';
 
 enum ChatState { NOTCONNECTED, CONNECTING, CONNECTED, EXPIRED }
 
-class NewChatScreen extends StatefulWidget {
-  NewChatScreen({Key? key, required this.user}) : super(key: widgetKey);
+class ChatScreen extends StatefulWidget {
+  ChatScreen({Key? key, required this.user}) : super(key: widgetKey);
   final User user;
-  static GlobalKey<_NewChatScreenState> widgetKey = GlobalKey();
+  static GlobalKey<_ChatScreenState> widgetKey = GlobalKey();
 
   @override
-  State<NewChatScreen> createState() => _NewChatScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _NewChatScreenState extends State<NewChatScreen> {
+class _ChatScreenState extends State<ChatScreen> {
   GlobalKey<BottomBarWidgetState> bottomBarKey = GlobalKey();
   late Conversation conversationInfo;
 

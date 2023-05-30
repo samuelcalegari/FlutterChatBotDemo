@@ -1,5 +1,5 @@
 import 'package:chatdemo/models/User.dart';
-import 'package:chatdemo/screens/ChatScreen.dart';
+import 'package:chatdemo/screens/chatScreen.dart';
 import 'package:chatdemo/utilities/bot_dispatcher_manager.dart';
 import 'package:chatdemo/utilities/notification_service.dart';
 import 'package:chatdemo/utilities/pref_manager.dart';
@@ -50,7 +50,7 @@ class _MyAppState extends State<MyApp> {
       case NavigationRoute.tagChatView:
         return getPageRoute(
             fullscreenDialog: false,
-            child: NewChatScreen(user: settings.arguments as User));
+            child: ChatScreen(user: settings.arguments as User));
       default:
         return null;
     }

@@ -1,9 +1,9 @@
 import 'package:chatdemo/main.dart';
-import 'package:chatdemo/screens/ChatScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../utilities/constants.dart';
+import '../chatScreen.dart';
 import '../profileScreen.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
@@ -45,7 +45,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                       height: 6,
                     ),
                     Text(
-                      NewChatScreen.widgetKey.currentState?.chatStatus ==
+                      ChatScreen.widgetKey.currentState?.chatStatus ==
                               ChatState.CONNECTED
                           ? "Online"
                           : "Offline",
@@ -57,13 +57,13 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               ),
               IconButton(
                 onPressed: () {
-                  if (NewChatScreen.widgetKey.currentState?.getUser() != null) {
+                  if (ChatScreen.widgetKey.currentState?.getUser() != null) {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ProfileScreen(
-                              user: NewChatScreen.widgetKey.currentState!
-                                  .getUser()),
+                              user:
+                                  ChatScreen.widgetKey.currentState!.getUser()),
                         ));
                   }
                 },

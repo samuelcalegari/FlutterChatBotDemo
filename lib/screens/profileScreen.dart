@@ -1,14 +1,13 @@
 import 'package:chatdemo/main.dart';
 import 'package:chatdemo/screens/components/chat_list_widget.dart';
-import 'package:chatdemo/screens/loginScreen.dart';
-import 'package:chatdemo/screens/ChatScreen.dart';
 import 'package:chatdemo/utilities/alert_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:chatdemo/utilities/constants.dart';
 import 'package:chatdemo/models/User.dart';
-import 'package:hive/hive.dart';
 import 'package:nb_utils/nb_utils.dart';
+
+import 'chatScreen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final User user;
@@ -97,12 +96,12 @@ class ProfileScreen extends StatelessWidget {
       child: InkWell(
           onTap: () {
             var value = "";
-            if (NewChatScreen
+            if (ChatScreen
                     .widgetKey.currentState?.conversationInfo.conversationId !=
                 null) {
               value = value +
                   " Conversation id : " +
-                  NewChatScreen
+                  ChatScreen
                       .widgetKey.currentState!.conversationInfo.conversationId;
             }
             if (botsManager.moodleToken != null) {

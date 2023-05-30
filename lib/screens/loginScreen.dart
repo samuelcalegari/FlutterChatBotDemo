@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:chatdemo/main.dart';
-import 'package:chatdemo/models/chatScreen%20copy%202.dart';
 import 'package:chatdemo/models/messages/Action.dart' as MessageAction;
 import 'package:chatdemo/models/messages/Attachment.dart';
 import 'package:chatdemo/models/messages/ImageUrl.dart';
 import 'package:chatdemo/models/messages/Message.dart';
+import 'package:chatdemo/screens/chatScreen.dart';
 import 'package:chatdemo/utilities/api_manager.dart';
 import 'package:chatdemo/utilities/extensions.dart';
 import 'package:flutter/material.dart';

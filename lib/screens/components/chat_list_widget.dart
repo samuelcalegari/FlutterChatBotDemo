@@ -1,6 +1,5 @@
 import 'package:chatdemo/models/messages/InfoMessage.dart';
 import 'package:chatdemo/models/messages/Message.dart' as BotMessage;
-import 'package:chatdemo/screens/ChatScreen.dart';
 import 'package:chatdemo/utilities/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -9,13 +8,11 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:nb_utils/nb_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../models/ActionModel.dart';
-import '../../models/CardModel.dart';
 import '../../models/ChatActionsModel.dart';
 import '../../models/ChatCardsModel.dart';
 import '../../models/ChatMessageModel.dart';
-import '../../models/messages/Attachment.dart';
+import '../chatScreen.dart';
 
 class ChatListWidget extends StatefulWidget {
   static GlobalKey<ChatListWidgetState> widgetKey = GlobalKey();
@@ -242,7 +239,7 @@ class ChatListWidgetState extends State<ChatListWidget> {
 // Send message to Direct Line
   sendMessage(msg) async {
     print("d");
-    NewChatScreen.widgetKey.currentState?.sendMessageToBot(msg);
+    ChatScreen.widgetKey.currentState?.sendMessageToBot(msg);
     scrollBottom();
     // if (conversation != null && conversation!.token != null) {
     //   final fmsg = jsonEncode({
