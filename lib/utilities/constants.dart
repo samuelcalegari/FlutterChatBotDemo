@@ -5,25 +5,52 @@ class Config {
 }
 
 class APIConstants {
-  static const String BOTAVATAR = "https://forco.univ-perp.fr/theme/forco/bot/bot.png";
+  static const String BOTAVATAR =
+      "https://forco.univ-perp.fr/theme/forco/bot/bot.png";
+  static const String DISPATCHER_URL = "https://botdispatcher.univ-perp.fr/";
   static const String MOODLE_BASE_URL = "https://forco.univ-perp.fr/";
-  static const String DIRECTLINE_BASE_URL = "https://directline.botframework.com/v3/directline/";
-  static const String DIRECTLINE_SECRET = "ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ";
+  static const String DIRECTLINE_BASE_URL =
+      "https://directline.botframework.com/v3/directline/";
+  static const String DIRECTLINE_SECRET =
+      "ur2eVWbMew8.5nEjH6LT8mVIqUXmis9ixQ8kwFNheqIr8pclXlNrThQ";
+}
+
+class StorageKey {
+  static const String KEY_AUTO_AUTH = "keyAutoAuth";
+  static const String KEY_CRED_LOGIN = "keyCredEmail";
+  static const String KEY_CRED_PSWD = "keyCredPwsd";
+  static const String KEY_QRCODE_URI = "keyQrcodeUri";
+
+  static const String KEY_QRCODE_URL_PATH = "keyQrcodeUrlPath";
+  static const String KEY_QRCODE_USER_ID = "keyQrcodeUserId";
+}
+
+class NavigationRoute {
+  static const String tagSplashView = "/splashView";
+  static const String tagLoginView = "/loginView";
+  static const String tagMainView = "/mainView";
+  static const String tagChatView = "/chatView";
+  static const String tagProfilView = "/profilView";
 }
 
 class APIOperations {
+  static final String fetchUserDetailMoodle =
+      "webservice/rest/server.php?wsfunction=core_webservice_get_site_info&moodlewsrestformat=json";
+  static final String fetchUserDetailMoodleFromField =
+      "webservice/rest/server.php?wsfunction=core_user_get_users_by_field&moodlewsrestformat=json";
+  static final String getTokenByQrCode =
+      "webservice/rest/server.php?wsfunction=tool_mobile_get_tokens_for_qr_login&moodlewsrestformat=json";
+  static final String getTokenByLoginMoodle =
+      "login/token.php?service=moodle_mobile_app&moodlewsrestformat=json";
 
-  static final String fetchUserDetailMoodle  = "webservice/rest/server.php?wsfunction=core_webservice_get_site_info&moodlewsrestformat=json";
-  static final String fetchUserDetailMoodleFromField = "webservice/rest/server.php?wsfunction=core_user_get_users_by_field&moodlewsrestformat=json";
-  static final String getTokenByQrCode  = "webservice/rest/server.php?wsfunction=tool_mobile_get_tokens_for_qr_login&moodlewsrestformat=json";
-  static final String getTokenByLoginMoodle  = "login/token.php?service=moodle_mobile_app&moodlewsrestformat=json";
+  static final String setConversationData =
+      "webservice/rest/server.php?wsfunction=local_wsbot_user_conversation&moodlewsrestformat=json";
 
   static final String getTokenFromDirectLine = "tokens/generate";
   static final String getConversation = "conversations/";
 }
 
 class Styles {
-
   static final kHintTextStyle = TextStyle(
     color: Colors.black26,
     fontFamily: 'OpenSans',
