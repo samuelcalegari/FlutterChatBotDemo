@@ -273,9 +273,7 @@ class ChatListWidgetState extends State<ChatListWidget> {
       messages.add(message);
       messageBox.add(message);
     });
-    if (!message.text.isEmptyOrNull) {
-      NotificationService().addNotif(message.text!);
-    }
+
     Future.delayed(200.milliseconds, () {
       scrollBottom();
     });
