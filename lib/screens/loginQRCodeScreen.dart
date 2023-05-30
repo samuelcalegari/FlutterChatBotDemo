@@ -2,7 +2,10 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:chatdemo/main.dart';
 import 'package:chatdemo/models/Secret.dart';
+import 'package:chatdemo/models/dispatcher/BotDispatcherList.dart';
+import 'package:chatdemo/utilities/api_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -10,8 +13,6 @@ import 'package:http/http.dart' as http;
 import 'package:chatdemo/models/CustomException.dart';
 import 'package:chatdemo/models/User.dart';
 import 'package:chatdemo/utilities/constants.dart';
-
-import 'chatScreen.dart';
 
 class LoginQRCodeScreen extends StatefulWidget {
   @override
@@ -86,10 +87,19 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
                             icon: FutureBuilder(
                                 future: controller?.getCameraInfo(),
                                 builder: (context, snapshot) {
-                                  IconData i =
-                                      (describeEnum(snapshot.data!) == 'front')
-                                          ? Icons.flip_camera_ios_outlined
-                                          : Icons.flip_camera_ios;
+                                  if (snapshot.hasData) {
+                                    IconData i =
+                                        (describeEnum(snapshot.data!) ==
+                                                'front')
+                                            ? Icons.flip_camera_ios_outlined
+                                            : Icons.flip_camera_ios;
+                                    return Icon(
+                                      i,
+                                      color: Colors.white,
+                                      size: 24.0,
+                                    );
+                                  }
+                                  IconData i = Icons.flip_camera_ios;
                                   return Icon(
                                     i,
                                     color: Colors.white,
@@ -118,8 +128,45 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
               Uri uri = Uri.parse(data);
               Map<String, String> queryParameters = uri.queryParameters;
               try {
-                await _auth(queryParameters['userid'].toString(),
-                    queryParameters['qrlogin'].toString());
+                User? user = await ApiManager.authFromQrCode(uri, true);
+                if (user != null) {
+                  Navigator.pushReplacementNamed(
+                      context, NavigationRoute.tagChatView,
+                      arguments: user);
+                } else {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Désolé...'),
+                          content: SingleChildScrollView(
+                            child: ListBody(
+                              children: <Widget>[
+                                Text("Le QR Code utilisé semble invalide"),
+                              ],
+                            ),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text('OK'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      });
+                }
+                // final test = APIConstants.MOODLE_BASE_URL +
+                //     APIOperations.getTokenByQrCode +
+                //     '&userid=' +
+                //     Uri.encodeComponent(queryParameters['userid'].toString()) +
+                //     '&qrLogin=' +
+                //     Uri.encodeComponent(queryParameters['qrlogin'].toString());
+                // print(test);
+                // auth(uri);
+                // //  await _auth(queryParameters['userid'].toString(),
+                // //      queryParameters['qrlogin'].toString());
               } catch (e) {
                 showDialog(
                     context: context,
@@ -220,8 +267,65 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
     }
   }
 
+  void saveUri(Uri uri) async {
+    String uriString = uri.toString();
+    await storage.write(key: "uri", value: jsonEncode(uri));
+
+    var savedUri = await storage.read(key: "uri");
+    if (savedUri != null) {
+      var test = Uri.dataFromString(jsonDecode(savedUri));
+      print(test);
+    }
+  }
+
+  Future auth(Uri uri) async {
+    saveUri(uri);
+    print(uri);
+
+    Bots? bot = botsManager.getBotForUri(path: uri.path);
+
+    if (bot != null && bot.moodleUser != null && bot.moodlePasswort != null) {
+      final url = APIConstants.MOODLE_BASE_URL +
+          APIOperations.getTokenByLoginMoodle +
+          '&username=' +
+          bot.moodleUser! +
+          '&password=' +
+          bot.moodlePasswort!;
+
+      final resp = await http.get(Uri.parse(url));
+      dynamic data = jsonDecode(resp.body);
+      var token = data["token"];
+      if (token != null) {
+        final url = APIConstants.MOODLE_BASE_URL +
+            APIOperations.fetchUserDetailMoodleFromField +
+            '&field=id' +
+            '&values[0]=' +
+            Uri.encodeComponent(uri.queryParameters['userid'].toString()) +
+            '&wstoken=' +
+            token;
+
+        print(url);
+
+        final resp = await http.get(Uri.parse(url));
+
+        if (resp.statusCode == 200) {
+          try {
+            User u = User.fromJson2(jsonDecode(resp.body)[0]);
+
+            Navigator.of(context).pushReplacementNamed(
+                NavigationRoute.tagChatView,
+                arguments: u);
+          } catch (e) {
+            throw CustomException('Impossible de récupérer votre profil');
+          }
+        }
+      }
+      print(resp);
+    }
+  }
+
   Future<void> _auth(String userid, String qrloginkey) async {
-    Secret secret = await SecretLoader(secretPath: "secret.json").load();
+    Secret secret = await SecretLoader(secretPath: "assets/secret.json").load();
 
     // Get General Token from Specific User
     final url = APIConstants.MOODLE_BASE_URL +
@@ -241,24 +345,22 @@ class _LoginQRCodeScreenState extends State<LoginQRCodeScreen> {
         final url = APIConstants.MOODLE_BASE_URL +
             APIOperations.fetchUserDetailMoodleFromField +
             '&field=id' +
-            '&values[0]=' + userid +
-            '&wstoken=' + token;
+            '&values[0]=' +
+            userid +
+            '&wstoken=' +
+            token;
 
         print(url);
 
         final resp = await http.get(Uri.parse(url));
 
         if (resp.statusCode == 200) {
-
           try {
             User u = User.fromJson2(jsonDecode(resp.body)[0]);
-
-            Navigator.pushReplacement(
-              context,
-              new MaterialPageRoute(
-                  builder: (context) => new ChatScreen(user: u)),
-            );
-          } catch(e) {
+            Navigator.of(context).pushReplacementNamed(
+                NavigationRoute.tagChatView,
+                arguments: u);
+          } catch (e) {
             throw CustomException('Impossible de récupérer votre profil');
           }
         }

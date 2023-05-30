@@ -1,447 +1,202 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:chatdemo/models/conversations/conversations.dart';
+import 'package:chatdemo/screens/components/app_bar.dart';
+import 'package:chatdemo/screens/components/bottom_bar_widget.dart';
+import 'package:chatdemo/screens/components/chat_list_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/widgets.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:chatdemo/utilities/constants.dart';
-import 'package:chatdemo/models/ActionModel.dart';
-import 'package:chatdemo/models/CardModel.dart';
-import 'package:chatdemo/models/ChatCardsModel.dart';
-import 'package:chatdemo/models/ChatMessageModel.dart';
-import 'package:chatdemo/models/ChatActionsModel.dart';
-import 'package:chatdemo/models/User.dart';
-import 'package:chatdemo/screens/profileScreen.dart';
+import 'package:http/http.dart' as http;
 
-String _token = '';
-String _streamUrl = '';
-String _conversationId = '';
+import '../main.dart';
+import '../models/User.dart';
+import '../models/messages/Message.dart' as BotMessage;
+import '../utilities/api_manager.dart';
+import '../utilities/constants.dart';
 
-// Get Token From Direct Line
-Future<String> _getToken() async {
-  final response = await http.post(
-    Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
-        APIOperations.getTokenFromDirectLine),
-    headers: {
-      HttpHeaders.authorizationHeader:
-          "Bearer " + APIConstants.DIRECTLINE_SECRET,
-    },
-  );
-  final responseJson = jsonDecode(response.body);
-  _token = responseJson['token'];
+enum ChatState { NOTCONNECTED, CONNECTING, CONNECTED, EXPIRED }
 
-  return _token;
-}
-
-// Get WebStream to real-time chat
-Future<String> _getStreamUrl() async {
-  await _getToken();
-  final response = await http.post(
-    Uri.parse(APIConstants.DIRECTLINE_BASE_URL + APIOperations.getConversation),
-    headers: {
-      HttpHeaders.authorizationHeader: "Bearer " + _token,
-    },
-  );
-
-  final responseJson = jsonDecode(response.body);
-
-  _streamUrl = responseJson['streamUrl'];
-
-  _conversationId = responseJson['conversationId'];
-
-  return _streamUrl;
-}
-
-// Send message to Direct Line
-_sendMessage(msg) async {
-  final fmsg = jsonEncode({
-    "locale": "fr-FR",
-    "type": "message",
-    "from": {"id": "user"},
-    "text": msg
-  });
-
-  final response = await http.post(
-    Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
-        APIOperations.getConversation +
-        _conversationId +
-        '/activities'),
-    headers: {
-      HttpHeaders.authorizationHeader: "Bearer " + _token,
-      HttpHeaders.contentTypeHeader: "application/json"
-    },
-    body: fmsg,
-  );
-
-  final responseJson = jsonDecode(response.body);
-
-  print(responseJson);
-}
-
-class ChatScreen extends StatefulWidget {
+class NewChatScreen extends StatefulWidget {
+  NewChatScreen({Key? key, required this.user}) : super(key: widgetKey);
   final User user;
-
-  const ChatScreen({Key? key, required this.user}) : super(key: key);
+  static GlobalKey<_NewChatScreenState> widgetKey = GlobalKey();
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  State<NewChatScreen> createState() => _NewChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _NewChatScreenState extends State<NewChatScreen> {
+  GlobalKey<BottomBarWidgetState> bottomBarKey = GlobalKey();
+  late Conversation conversationInfo;
+
+  StreamController<dynamic> streamController = StreamController<dynamic>();
+
+  var chatStatus = ChatState.NOTCONNECTED;
+  late ChatListWidget chatListWidget;
+  var isAutoLog = true;
   @override
-  Widget build(context) {
-    return FutureBuilder<String>(
-        future: _getStreamUrl(),
-        builder: (context, AsyncSnapshot<String> snapshot) {
-          if (snapshot.hasData) {
-            return MaterialApp(
-              title: Config.APP_NAME,
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                primarySwatch: Colors.blue,
-              ),
-              home: MyHomePage(
-                  channel: IOWebSocketChannel.connect(_streamUrl),
-                  user: widget.user),
-            );
-          } else {
-            return Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
+  void initState() {
+    super.initState();
+    chatListWidget = ChatListWidget(username: widget.user.userName);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      connectToConversation();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBarWidget(),
+      body: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          getBody().paddingBottom(kToolbarHeight),
+          BottomBarWidget(
+            key: bottomBarKey,
+            sendMessageCallback: (msg) {
+              sendMessageToBot(msg);
+            },
+          )
+        ],
+      ),
+    );
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      appBar: AppBarWidget(),
+      body: getBody(),
+      bottomNavigationBar: BottomBarWidget(
+        sendMessageCallback: (msg) {
+          sendMessageToBot(msg);
+        },
+      ),
+    );
+  }
+
+  User getUser() {
+    return widget.user;
+  }
+
+  Future connectToConversation() async {
+    setState(() {
+      this.chatStatus = ChatState.CONNECTING;
+    });
+    var conversation = await ApiManager.getConversationInfo();
+    if (conversation != null) {
+      this.conversationInfo = conversation;
+      setupConversationStream(this.conversationInfo);
+    }
+  }
+
+  Widget getBody() {
+    switch (chatStatus) {
+      case ChatState.NOTCONNECTED:
+        return Center(child: CircularProgressIndicator());
+      case ChatState.CONNECTING:
+        return Center(child: CircularProgressIndicator());
+      case ChatState.CONNECTED:
+        return chatListWidget;
+      case ChatState.EXPIRED:
+        print("La connexion à expirer");
+        return Center(child: CircularProgressIndicator());
+    }
+  }
+
+  void setupConversationStream(Conversation conversation) async {
+    Stream stream = streamController.stream;
+    if (botsManager.moodleToken != null) {
+      var test = await ApiManager.setConversationData(botsManager.moodleToken!,
+          conversation.conversationId, widget.user.userId.toString());
+      print(test);
+    }
+    var channel = IOWebSocketChannel.connect(conversation.streamUrl);
+    streamController.addStream(channel.stream);
+    stream.listen((value) {
+      if (value is String && value.isNotEmpty) {
+        setState(() {
+          try {
+            if (isAutoLog) {
+              var message = BotMessage.Message.fromJson(json.decode(value));
+              switch (message.getMessagePosition()) {
+                case 0:
+                  return;
+                case 1:
+                  return;
+                case 2:
+                  sendMessageToBot(widget.user.userName);
+                  break;
+                case 3:
+                  return;
+                default:
+                  if (bottomBarKey.currentState?.isEnabled == false) {
+                    bottomBarKey.currentState?.enableInput();
+                  }
+
+                  ChatListWidget.widgetKey.currentState?.addMessage(
+                      BotMessage.Message.fromJson(json.decode(value)));
+
+                  //messages.add(Message.fromJson(json.decode(value)));
+                  return;
+              }
+
+              return;
+            }
+
+            ChatListWidget.widgetKey.currentState
+                ?.addMessage(BotMessage.Message.fromJson(json.decode(value)));
+
+            //messages.add(Message.fromJson(json.decode(value)));
+          } catch (e) {
+            //print("impossible de parser le message");
           }
         });
+      }
+    });
+
+    setState(() {
+      chatStatus = ChatState.CONNECTED;
+      _startConversation();
+    });
   }
-}
-
-class MyHomePage extends StatefulWidget {
-  WebSocketChannel channel;
-  User user;
-  int watermark = 0;
-
-  MyHomePage({Key? key, required this.channel, required this.user})
-      : super(key: key);
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _msgText = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-
-  List messages = [];
 
   _startConversation() {
     try {
-      _sendMessage("Bonjour");
+      sendMessageToBot("Bonjour");
     } catch (e) {
       print('erreur envoi message');
       print(e.toString());
     }
   }
 
-  _send() {
-    setState(() {
-      if (_msgText.text.isNotEmpty) {
-        // Add Message
-        try {
-          _sendMessage(_msgText.text);
-          print('message envoyé');
-        } catch (e) {
-          print('erreur envoi message');
-          print(e.toString());
-        }
+  sendMessageToBot(msg) async {
+    if (conversationInfo.token != null) {
+      final fmsg = jsonEncode({
+        "locale": "fr-FR",
+        "type": "message",
+        "from": {"id": "user"},
+        "text": msg
+      });
 
-        // Remove Focus on Text Input
-        FocusScopeNode currentFocus = FocusScope.of(context);
-        if (!currentFocus.hasPrimaryFocus) {
-          currentFocus.unfocus();
-        }
+      final response = await http.post(
+        Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
+            APIOperations.getConversation +
+            conversationInfo.conversationId +
+            '/activities'),
+        headers: {
+          HttpHeaders.authorizationHeader: "Bearer " + conversationInfo.token!,
+          HttpHeaders.contentTypeHeader: "application/json"
+        },
+        body: fmsg,
+      );
 
-        // Clear Text Input
-        _msgText.text = '';
-      }
-    });
-  }
-
-  _scrollBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 500), curve: Curves.fastOutSlowIn);
+      final responseJson = jsonDecode(response.body);
+      print(Uri.parse(APIConstants.DIRECTLINE_BASE_URL +
+          APIOperations.getConversation +
+          conversationInfo.conversationId +
+          '/activities'));
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    widget.channel.sink.close();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        flexibleSpace: SafeArea(
-          child: Container(
-            padding: EdgeInsets.only(right: 16),
-            child: Row(
-              children: <Widget>[
-                SizedBox(
-                  width: 10,
-                ),
-                CircleAvatar(
-                  backgroundImage: NetworkImage(APIConstants.BOTAVATAR),
-                  maxRadius: 20,
-                ),
-                SizedBox(
-                  width: 15,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        Config.APP_NAME,
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      SizedBox(
-                        height: 6,
-                      ),
-                      Text(
-                        "Online",
-                        style: TextStyle(
-                            color: Colors.grey.shade600, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ProfileScreen(user: widget.user),
-                        ));
-                  },
-                  icon: Icon(
-                    Icons.settings,
-                    color: Colors.black54,
-                  ),
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: Stack(
-        children: <Widget>[
-          StreamBuilder(
-            stream: widget.channel.stream,
-            builder: (context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                    child: ElevatedButton(
-                        onPressed: _startConversation,
-                        child: const Text('Démarrer')));
-              }
-
-              if (snapshot.hasError) {
-                print(snapshot.error.toString());
-                return Center(child: const Text('Une erreur est survenue ...'));
-              } else if (snapshot.hasData) {
-                try {
-                  int? w;
-                  dynamic obj = jsonDecode(snapshot.data);
-                  String from = obj['activities'][0]['from']['id'];
-                  final suggestedActions =
-                      obj['activities'][0]['suggestedActions'] ?? null;
-                  final attachments =
-                      obj['activities'][0]['attachments'] ?? null;
-
-                  print('\n#########################\n');
-                  //print(obj);
-                  //print(obj['watermark']);
-                  //print(suggestedActions);
-                  //print(attachments);
-
-                  if (attachments != null) {
-                    List<dynamic> c = attachments.map((e) {
-                      if (e['contentType'] ==
-                          'application/vnd.microsoft.card.hero') {
-                        return CardInfos(
-                            type: e['contentType'],
-                            title: e['content']['title'],
-                            text: e['content']['text'],
-                            urlImg: e['content']['images'][0]['url'],
-                            actions: e['content']['buttons']
-                                .map((e) => ActionInfos(
-                                    type: e['type'],
-                                    title: e['title'],
-                                    value: e['value']))
-                                .toList());
-                      } else {
-                        final _se1 = e['content']['body'][4]['columns'][0]
-                                ['items'][0]['text'] +
-                            '\n' +
-                            e['content']['body'][4]['columns'][0]['items'][1]
-                                ['text'];
-                        final _se2 = e['content']['body'][4]['columns'][1]
-                                ['items'][0]['text'] +
-                            '\n' +
-                            e['content']['body'][4]['columns'][1]['items'][1]
-                                ['text'];
-
-                        final _url =
-                            e['content']['body'][5]['actions'][0]['url'];
-
-                        var re = RegExp(r'(?<=mod\/)(.*)(?=\/view)');
-                        var match = re.firstMatch(_url);
-                        var _template =
-                            (match != null) ? match.group(0) : "default";
-
-                        return CardInfos2(
-                            type: e['contentType'],
-                            template: _template.toString(),
-                            title: e['content']['body'][1]['text'],
-                            text: e['content']['body'][2]['text'],
-                            subElement1: _se1,
-                            subElement2: _se2,
-                            actions: [
-                              ActionInfos(
-                                  type: e['content']['body'][5]['actions'][0]
-                                      ['type'],
-                                  title: e['content']['body'][5]['actions'][0]
-                                      ['title'],
-                                  value: _url)
-                            ]);
-                      }
-                    }).toList();
-
-                    messages.add(ChatCards(
-                        cardsinfos: c, from: from, sendAction: _sendMessage));
-                  }
-
-                  if (from != 'user') {
-                    w = int.tryParse(obj['watermark']);
-                  }
-
-                  if ((from == "user") || (w != widget.watermark)) {
-                    messages.add(ChatMessage(
-                        content: obj['activities'][0]['text'], from: from));
-
-                    if (from != 'user' && w != null) widget.watermark = w;
-                  }
-
-                  if (suggestedActions != null) {
-                    List<dynamic> a = suggestedActions['actions']
-                        .map((e) => ActionInfos(
-                            type: e['type'],
-                            title: e['title'],
-                            value: e['value']))
-                        .toList();
-
-                    messages.add(ChatActions(
-                        actions: a, from: from, sendAction: _sendMessage));
-                  }
-
-                  // AutoScroll when data incoming
-                  WidgetsBinding.instance!.addPostFrameCallback((_) {
-                    _scrollBottom();
-                  });
-                } catch (e) {}
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  itemCount: messages.length,
-                  shrinkWrap: false,
-                  physics: ScrollPhysics(),
-                  padding: EdgeInsets.only(top: 10, bottom: 100),
-                  itemBuilder: (context, index) {
-                    return messages[index];
-                  },
-                );
-              } else {
-                return Center(child: const Text('...'));
-              }
-            },
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              padding: EdgeInsets.only(left: 10, bottom: 10, top: 10),
-              height: 60,
-              width: double.infinity,
-              color: Colors.white,
-              child: Row(
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      _scrollBottom();
-                    },
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlue,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Icon(
-                        Icons.arrow_downward,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 15,
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _msgText,
-                      decoration: InputDecoration(
-                          hintText: "Write message...",
-                          hintStyle: TextStyle(color: Colors.black54),
-                          border: InputBorder.none),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 15,
-                  ),
-                  FloatingActionButton(
-                    onPressed: _send,
-                    child: Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    backgroundColor: Colors.blue,
-                    elevation: 0,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
